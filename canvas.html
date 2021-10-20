@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Paint</title>
+  </head>
+
+  <body>
+    <div align="center"><h2>Simple Paint App</h2></div>
+    <canvas id="Canvas" width="800" height="500"></canvas>
+    <div align="right"><button type="reset" id="reset">Reset</button></div>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #333;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, Helvetica, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      #Canvas {
+        background: #e2f0ec;
+        border-radius: 5px;
+      }
+
+      #source {
+        display: none;
+      }
+    </style>
+
+    <script>
+      //####################################################################################################################
+      //		Paint Application for Triangles
+      //		Submitted by : Deepak Mittal
+      //####################################################################################################################
+
+      // Selecting DOM elements
+
+      const canvas = document.getElementById("Canvas");
+      const reset = document.getElementById("reset");
+      const ctx = canvas.getContext("2d");
+
+      // variables to point at starting and ending indices, color, an array to point specific triangle of triangle
+
+      let startX = 0;
+      let startY = 0;
+      let endX = 0;
+      let endY = 0;
+      let numoftri = [];
+      let index = 0;
+      let flag = false;
+      let drag = false;
+      let mc = false;
+      let tricolors = [
+        "green",
+        "blue",
+        "red",
+        "orange",
+        "purple",
+        "yellow",
+        "violet",
+        "pink",
+        "black",
+      ];
+
+      // Mouse events mimicks to start event and stores x, y cords to start the drawing.
+
+      canvas.addEventListener("mousedown", MouseDown);
+      canvas.addEventListener("mouseup", MouseUp);
+      canvas.addEventListener("mousemove", MouseMove);
+      canvas.addEventListener("dblclick", MouseDoubleClick);
+
+      // Functions for event listener
+
+      //function for delete triangle on double click
+
+      function MouseDoubleClick(e) {
+        var pos = clickedPoint(canvas, e);
+        let dbX = pos.x;
+        let dbY = pos.y;
+
+        if (numoftri !== null) {
+          for (var j = 0; j < numoftri.length; j++) {
+            redraw(numoftri[j]);
+            if (ctx.isPointInPath(dbX, dbY)) {
+              numoftri.splice(j, 1);
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              drawMoveTri(); //after splicing that triangle to redraw remaining triangles in array after clearing the canvas
+            }
+          }
+        }
+      }
+
+      //mouse down function to start drwaing triangle from clicked point or if clicked point on existed triangle then select that triangle to drag.
+
+      function MouseDown(e) {
+        var pos = clickedPoint(canvas, e);
+        startX = pos.x;
+        startY = pos.y;
+        mc = true;
+
+        if (numoftri !== null) {
+          for (var j = 0; j < numoftri.length; j++) {
+            redraw(numoftri[j]);
+            if (ctx.isPointInPath(startX, startY)) {
+              index = j;
+              drag = true;
+            }
+          }
+        }
+      }
+
+      function MouseMove(e) {
+        var pos = clickedPoint(canvas, e);
+        if (mc) {
+          endX = pos.x;
+          endY = pos.y;
+
+          if (drag) {
+            var newX = endX - startX;
+            var newY = endY - startY;
+            startX = endX;
+            startY = endY;
+            numoftri[index].X += newX;
+            numoftri[index].Y += newY;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawMoveTri();
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTriangle();
+          }
+        }
+      }
+
+      function MouseUp() {
+        mc = false;
+        drag = false;
+        if (flag) {
+          var index = Math.floor(Math.random() * 9);
+          ctx.fillStyle = tricolors[index];
+          ctx.fill();
+          numoftri.push({
+            X: 0,
+            Y: 0,
+            x0: startX,
+            y0: startY,
+            x1: endX,
+            y1: endY,
+            x2: startX + (startX - endX),
+            y2: endY,
+            col: index,
+          });
+          flag = false;
+        }
+      }
+
+      // function for drawing new triangle
+
+      function drawTriangle() {
+        if (numoftri !== null) {
+          drawMoveTri();
+        }
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.lineTo(startX + (startX - endX), endY);
+        ctx.closePath();
+        ctx.stroke();
+        flag = true;
+      }
+
+      //function to redraw all triangles after clearing canvas
+
+      function drawMoveTri() {
+        for (var k = 0; k < numoftri.length; k++) {
+          redraw(numoftri[k]);
+        }
+      }
+
+      //redraw function to draw the triangle already stored in array
+
+      function redraw(numoftri) {
+        ctx.beginPath();
+        ctx.moveTo(numoftri.x0 + numoftri.X, numoftri.y0 + numoftri.Y);
+        ctx.lineTo(numoftri.x1 + numoftri.X, numoftri.y1 + numoftri.Y);
+        ctx.lineTo(numoftri.x2 + numoftri.X, numoftri.y2 + numoftri.Y);
+        ctx.closePath();
+        ctx.fillStyle = tricolors[numoftri.col];
+        ctx.fill();
+      }
+
+      //function for selecting click point
+
+      function clickedPoint(canvas, e) {
+        let cX = canvas.getBoundingClientRect().left + window.scrollX;
+        let cY = canvas.getBoundingClientRect().top + window.scrollY;
+        return {
+          x: e.pageX - cX,
+          y: e.pageY - cY,
+        };
+      }
+
+      // reset event to clear the canvas
+
+      reset.addEventListener("click", (e) => {
+        numoftri = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+    </script>
+  </body>
+</html>
